@@ -1,4 +1,4 @@
-postgresql://postgres:serelyn@1432@db.zyqgbghsfhggcjytqbuq.supabase.co:5432/postgres
+
 
 AIzaSyC2wzEvYMUQ-jFdI2oAjzwjNORHZ2EGLI0
 

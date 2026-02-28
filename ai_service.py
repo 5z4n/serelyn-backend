@@ -1,5 +1,6 @@
 import os
 import json
+import re
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -24,6 +25,16 @@ Respond ONLY in valid JSON:
 """
 
 
+def _extract_json(raw: str) -> str:
+    """Strip markdown code fences if present so json.loads works."""
+    raw = raw.strip()
+    # Match ```json ... ``` or ``` ... ```
+    match = re.search(r"```(?:json)?\s*([\s\S]*?)\s*```", raw)
+    if match:
+        return match.group(1).strip()
+    return raw
+
+
 def analyze_text(text: str) -> dict:
     prompt = PROMPT_TEMPLATE.format(text=text)
 
@@ -39,8 +50,7 @@ def analyze_text(text: str) -> dict:
         )
 
         raw = completion.choices[0].message.content.strip()
-
-        # Try parsing JSON
+        raw = _extract_json(raw)
         parsed = json.loads(raw)
 
         valid_emotions = {"happy", "sad", "anxious", "stressed", "angry", "neutral"}
@@ -56,10 +66,14 @@ def analyze_text(text: str) -> dict:
 
         return {"emotion": emotion, "response": response_text}
 
+    except json.JSONDecodeError as e:
+        print("Groq JSON parse error:", e)
+        return {
+            "emotion": "stressed",
+            "response": "I understand this feels overwhelming. Take a slow breath — you're not alone, and things will get better step by step."
+        }
     except Exception as e:
-        # ---- FALLBACK (Hackathon Safety Net) ----
         print("Groq error:", e)
-
         return {
             "emotion": "stressed",
             "response": "I understand this feels overwhelming. Take a slow breath — you're not alone, and things will get better step by step."

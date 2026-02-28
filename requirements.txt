@@ -3,5 +3,5 @@ uvicorn
 psycopg2-binary
 python-dotenv
 bcrypt
-google-generativeai
 groq
+PyJWT

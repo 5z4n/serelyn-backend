@@ -1,6 +1,6 @@
 # Serelyn Backend
 
-AI-powered mental health companion API built with FastAPI + PostgreSQL + Gemini.
+AI-powered mental health companion API built with FastAPI + PostgreSQL + Groq (Llama).
 
 ---
 
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 # 4. Configure environment
 cp .env.example .env
-# Edit .env and fill in DATABASE_URL and GEMINI_API_KEY
+# Edit .env: DATABASE_URL, GROQ_API_KEY, JWT_SECRET
 
 # 5. Create database tables
 # Run schema.sql in your Supabase SQL editor or psql client
@@ -77,16 +77,18 @@ curl -X POST http://localhost:8000/login \
 ```
 Response:
 ```json
-{"message": "Login successful", "user_id": 1}
+{"message": "Login successful", "user_id": 1, "access_token": "eyJ..."}
 ```
+Use `access_token` in the `Authorization: Bearer <token>` header for protected routes.
 
 ---
 
-### POST /analyze
+### POST /analyze (requires auth)
 ```bash
 curl -X POST http://localhost:8000/analyze \
   -H "Content-Type: application/json" \
-  -d '{"user_id": 1, "text": "I feel so stressed about my exams"}'
+  -H "Authorization: Bearer YOUR_ACCESS_TOKEN" \
+  -d '{"text": "I feel so stressed about my exams"}'
 ```
 Response:
 ```json
@@ -109,11 +111,13 @@ Response:
 4. Configure the service:
    - **Runtime:** Python 3
    - **Build Command:** `pip install -r requirements.txt`
-   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port 10000`
+   - **Start Command:** Leave default (uses Procfile: `uvicorn main:app --host 0.0.0.0 --port $PORT`)
 
 5. Add Environment Variables in the Render dashboard:
    - `DATABASE_URL` → your Supabase connection string
-   - `GEMINI_API_KEY` → your Google Gemini API key
+   - `GROQ_API_KEY` → your Groq API key (https://console.groq.com)
+   - `JWT_SECRET` → a long random secret for signing tokens
+   - `CORS_ORIGINS` → your frontend URL(s), comma-separated (e.g. `https://yourapp.com`)
 
 6. Click **Deploy**. Render will build and host your API.
 
@@ -125,12 +129,13 @@ Response:
 
 ```
 serelyn-backend/
-├── main.py          # FastAPI app, all route handlers
-├── database.py      # psycopg2 connection helper
+├── main.py          # FastAPI app, route handlers, JWT auth
+├── database.py      # Connection pool (psycopg2)
 ├── models.py        # Pydantic request models
-├── auth.py          # bcrypt password hashing & verification
-├── ai_service.py    # Gemini API call + JSON parsing
+├── auth.py          # bcrypt + JWT (hash, verify, create/verify token)
+├── ai_service.py    # Groq API call + JSON parsing
 ├── schema.sql       # Database table definitions
 ├── requirements.txt
+├── Procfile         # Render start command
 └── .env.example
 ```

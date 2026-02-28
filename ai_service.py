@@ -6,8 +6,11 @@ from groq import Groq
 
 load_dotenv()
 
-# Initialize Groq client
-client = Groq(api_key=os.getenv("GROQ_API_KEY"))
+# Initialize Groq client (fail fast if key missing on import)
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise RuntimeError("GROQ_API_KEY is not set in environment. Add it in .env locally or in Render dashboard.")
+client = Groq(api_key=GROQ_API_KEY)
 
 PROMPT_TEMPLATE = """You are an empathetic mental health companion.
 
@@ -68,13 +71,7 @@ def analyze_text(text: str) -> dict:
 
     except json.JSONDecodeError as e:
         print("Groq JSON parse error:", e)
-        return {
-            "emotion": "stressed",
-            "response": "I understand this feels overwhelming. Take a slow breath — you're not alone, and things will get better step by step."
-        }
+        raise ValueError(f"AI returned invalid format: {e}") from e
     except Exception as e:
         print("Groq error:", e)
-        return {
-            "emotion": "stressed",
-            "response": "I understand this feels overwhelming. Take a slow breath — you're not alone, and things will get better step by step."
-        }
+        raise RuntimeError(f"AI service failed: {e}") from e

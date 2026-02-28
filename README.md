@@ -19,7 +19,7 @@ pip install -r requirements.txt
 
 # 4. Configure environment
 cp .env.example .env
-# Edit .env: DATABASE_URL, GROQ_API_KEY, JWT_SECRET
+# Edit .env: DATABASE_URL, GROQ_API_KEY, JWT_SECRET (see below)
 
 # 5. Create database tables
 # Run schema.sql in your Supabase SQL editor or psql client
@@ -30,6 +30,16 @@ uvicorn main:app --reload
 
 Server will be live at: http://localhost:8000  
 Interactive docs: http://localhost:8000/docs
+
+---
+
+## Where to get secrets
+
+- **GROQ_API_KEY** – Create an API key at [Groq Console](https://console.groq.com). The backend calls Groq for real LLM responses; if this is missing on Render, `/analyze` will return 502.
+- **JWT_SECRET** – You don’t “get” this from anywhere; you generate it yourself and keep it private. Use a long random string. Examples:
+  - **PowerShell:** `[Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }) -as [byte[]])`
+  - **Python:** `python -c "import secrets; print(secrets.token_urlsafe(32))"`
+  - Or any password generator (32+ random characters). On Render, set **JWT_SECRET** in Environment to this value.
 
 ---
 
